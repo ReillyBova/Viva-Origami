@@ -4,17 +4,18 @@
   "version": "0.1.0",
   "license": "MIT",
   "title": "Viva Origami",
-  "description": "SHORT DESCRIPTION OF PROJECT HERE. ONE TO TWO SENTENCES MAX",
+  "description": "A wellbeing project build for Microsoft FHL 2021",
   "keywords": [
-    "Princeton",
-    "graphics",
-    "three.js",
-    "COS 426",
-    "ivy league",
-    "keyword1",
-    "keyword2",
-    "...",
-    "this last entry CANNOT have a comma after it ->"
+    "Microsoft",
+    "FHL",
+    "MWT",
+    "Viva Insights",
+    "Origami",
+    "Kirigami",
+    "ThreeJS",
+    "Simulator",
+    "Paper",
+    "Wellbeing"
   ],
   "scripts": {
     "start": "webpack-dev-server --mode development --output-public-path \"\"",
