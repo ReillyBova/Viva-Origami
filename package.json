@@ -2,7 +2,8 @@
   "name": "lower-case-dashed-name-of-project",
   "repository": "three-seed",
   "version": "0.1.0",
-  "title": "PROJECT TITLE HERE",
+  "license": "MIT",
+  "title": "Viva Origami",
   "description": "SHORT DESCRIPTION OF PROJECT HERE. ONE TO TWO SENTENCES MAX",
   "keywords": [
     "Princeton",
