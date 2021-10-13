@@ -1,2 +1,5 @@
-export * from './Flower';
-export * from './Land';
+export * from './Plant';
+export * from './Lychee';
+export * from './Bust';
+export * from './Table';
+export * from './TorusKnot';
