@@ -21,7 +21,7 @@
     "start": "webpack-dev-server --mode development --output-public-path \"\"",
     "prebuild": "rimraf ./build && mkdirp ./build",
     "build": "npm run prebuild && webpack --mode production --progress --output-public-path \"\"",
-    "format": "prettier --write '*.js' 'src/**/*.js'",
+    "format": "prettier --write '*.(js|ts)' 'src/**/*.(js|ts)'",
     "deploy": "npm run prebuild && webpack --mode production --progress && gh-pages -d build"
   },
   "dependencies": {
@@ -33,6 +33,8 @@
   "devDependencies": {
     "@babel/core": "^7.15.8",
     "@babel/preset-env": "^7.15.8",
+    "@types/dat.gui": "^0.7.7",
+    "@types/three": "^0.133.1",
     "babel-loader": "^8.2.2",
     "file-loader": "^6.2.0",
     "gh-pages": "^3.2.3",
@@ -41,6 +43,8 @@
     "prettier": "^2.4.1",
     "raw-loader": "^4.0.2",
     "rimraf": "^3.0.2",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
     "webpack": "^5.58.1",
     "webpack-dev-server": "^4.3.1"
   },

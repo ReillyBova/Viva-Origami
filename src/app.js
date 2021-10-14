@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { BaseScene } from 'scenes';
+import { FoldingScene } from 'scenes';
 
 // Initialize core THREEJS components
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-const scene = new BaseScene(renderer);
+const scene = new FoldingScene(renderer);
 const camera = new THREE.PerspectiveCamera();
 
 // Set up camera

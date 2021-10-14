@@ -18,6 +18,11 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: path.resolve(__dirname, './node_modules/'),
+            },
+            {
                 test: /\.js$/,
                 use: 'babel-loader',
                 exclude: path.resolve(__dirname, './node_modules/'),
@@ -39,7 +44,9 @@ module.exports = {
             lights$: path.resolve(__dirname, 'src/components/lights'),
             objects$: path.resolve(__dirname, 'src/components/objects'),
             scenes$: path.resolve(__dirname, 'src/components/scenes'),
+            bases$: path.resolve(__dirname, 'src/components/bases'),
         },
+        extensions: ['.tsx', '.ts', '.js'],
     },
     plugins: [
         new HtmlWebpackPlugin({ title: pkg.title, favicon: 'src/favicon.ico' }),
