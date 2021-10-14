@@ -19,7 +19,7 @@ export class Paper extends GroupBase {
             envMapIntensity: 1.0,
             displacementScale: 0.03,
             metalness: 0,
-            roughness: 1
+            roughness: 1,
         });
         material.normalScale.set(0.15, 0.15);
 
@@ -52,7 +52,7 @@ export class Paper extends GroupBase {
             material.roughnessMap
         );
 
-        this.position.set(.7, -0.05, .3);
+        this.position.set(0.7, -0.05, 0.3);
         this.rotateY(-0.02);
     }
 }
