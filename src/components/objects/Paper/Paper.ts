@@ -1,4 +1,4 @@
-import * as THREE from 'three'; 
+import * as THREE from 'three';
 import { GroupBase, IBaseState } from '../../bases';
 
 import DIFFUSE from './textures/paper_diffuse.jpg';
@@ -11,7 +11,7 @@ export class Paper extends GroupBase {
         super(parentState);
 
         // Set up paper geometry
-        const geometry = new THREE.PlaneBufferGeometry(11, 8, 100, 100);
+        const geometry = new THREE.PlaneBufferGeometry(11, 8, 220, 160);
         geometry.rotateX(-Math.PI / 2);
         geometry.center();
 
@@ -23,39 +23,47 @@ export class Paper extends GroupBase {
         geometry.setAttribute('coordinate', coordinateAttribute);
 
         // Set up paper material
-        const material = new THREE.MeshStandardMaterial({
+        const topMaterial = new THREE.MeshStandardMaterial({
             color: 0xeeeeee,
-            side: THREE.DoubleSide,
-            envMapIntensity: 1.0,
+            side: THREE.FrontSide,
+            envMapIntensity: 1,
             displacementScale: 0.02,
             displacementBias: -0.015,
             metalness: 0,
             roughness: 1,
         });
-        material.normalScale.set(0.15, 0.15);
+        topMaterial.normalScale.set(0.15, 0.15);
 
         const loader = new THREE.TextureLoader();
 
-        material.map = loader.load(DIFFUSE);
-        material.normalMap = loader.load(NORMAL);
-        material.displacementMap = loader.load(DISPLACE);
-        material.roughnessMap = loader.load(ROUGH);
+        topMaterial.map = loader.load(DIFFUSE);
+        topMaterial.normalMap = loader.load(NORMAL);
+        topMaterial.displacementMap = loader.load(DISPLACE);
+        topMaterial.roughnessMap = loader.load(ROUGH);
 
-        material.map.wrapS = THREE.RepeatWrapping;
-        material.map.repeat.set(1, 1);
-        material.normalMap.wrapS = THREE.RepeatWrapping;
-        material.normalMap.repeat.set(1, 1);
-        material.roughnessMap.wrapS = THREE.RepeatWrapping;
-        material.roughnessMap.repeat.set(1, 1);
-        material.displacementMap.wrapS = THREE.RepeatWrapping;
-        material.displacementMap.repeat.set(1, 1);
+        topMaterial.map.wrapS = THREE.RepeatWrapping;
+        topMaterial.map.repeat.set(1, 1);
+        topMaterial.normalMap.wrapS = THREE.RepeatWrapping;
+        topMaterial.normalMap.repeat.set(1, 1);
+        topMaterial.roughnessMap.wrapS = THREE.RepeatWrapping;
+        topMaterial.roughnessMap.repeat.set(1, 1);
+        topMaterial.displacementMap.wrapS = THREE.RepeatWrapping;
+        topMaterial.displacementMap.repeat.set(1, 1);
 
-        const paperMesh = new THREE.Mesh(geometry, material);
-        paperMesh.castShadow = true;
+        // Duplicate material for different top / bottom
+        const bottomMaterial = topMaterial.clone();
+        bottomMaterial.side = THREE.BackSide;
+        bottomMaterial.color = new THREE.Color(0x3b186f);
+        bottomMaterial.roughness = 0.8;
+
+        const paperTopMesh = new THREE.Mesh(geometry, topMaterial);
+        const paperBottomMesh = new THREE.Mesh(geometry, bottomMaterial);
+        paperTopMesh.castShadow = true;
+        paperBottomMesh.castShadow = true;
 
         // Set up outlines
         const edgesGeometry = new THREE.EdgesGeometry(geometry);
-        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x555555 });
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x444444 });
         const outlineMesh = new THREE.LineSegments(edgesGeometry, lineMaterial);
 
         const linesPositionAttribute = edgesGeometry.attributes
@@ -66,15 +74,16 @@ export class Paper extends GroupBase {
         edgesGeometry.setAttribute('coordinate', linesCoordinateAttribute);
 
         // Add meshes
-        this.add(paperMesh, outlineMesh);
+        this.add(paperTopMesh, paperBottomMesh, outlineMesh);
         this.state.disposalList.push(
             geometry,
             edgesGeometry,
-            material,
-            material.map,
-            material.normalMap,
-            material.displacementMap,
-            material.roughnessMap,
+            topMaterial,
+            topMaterial.map,
+            topMaterial.normalMap,
+            topMaterial.displacementMap,
+            topMaterial.roughnessMap,
+            bottomMaterial,
             lineMaterial
         );
 
@@ -92,37 +101,52 @@ export class Paper extends GroupBase {
             .array as Float32Array;
         const coordinateArray = geometry.attributes.coordinate.array;
 
-        const L = 5.5;
+        const L = 6.8;
         const midCrease = L / 2;
         const touchdownPoint = L / 8;
-        const minFoldedHeight = 0.05;
-        const minRadius = 0.05;
-        const target = Math.cos(timeStamp / 2000) * 5.5;
+        const minFoldedHeight = 0.03;
+        const minRadius = 0.03;
+        const target = Math.cos(timeStamp / 2000) * 6.8;
+
+        const angle = (Math.cos(timeStamp / 3000) * Math.PI) / 2;
 
         if (target > L) {
             for (let i = 0; i < positionArray.length; i += 3) {
-                const x = coordinateArray[i];
-                const y = coordinateArray[i + 1];
-
-                if (x > 0) {
-                    positionArray[i] = x;
-                    positionArray[i + 1] = y;
-                }
+                positionArray[i] = coordinateArray[i];
+                positionArray[i + 2] = coordinateArray[i + 2];
+                positionArray[i + 1] = coordinateArray[i + 1];
             }
         } else if (target > midCrease) {
             const t = (target - midCrease) / midCrease;
             const r = (L / (2 * Math.PI)) * Math.pow(4, t);
 
             for (let i = 0; i < positionArray.length; i += 3) {
-                const x = coordinateArray[i];
+                const [u, v] = this.toUV(
+                    angle,
+                    coordinateArray[i],
+                    coordinateArray[i + 2]
+                );
                 const y = coordinateArray[i + 1];
 
-                if (x > target) {
-                    const theta = (x - target) / r;
-                    positionArray[i] = target + Math.sin(theta) * r;
-                    positionArray[i + 1] = y + r - Math.cos(theta) * r;
-                } else if (x > 0) {
+                if (u > target) {
+                    const theta = (u - target) / r;
+
+                    const [x, z] = this.fromUV(
+                        angle,
+                        target + Math.sin(theta) * r,
+                        v
+                    );
                     positionArray[i] = x;
+                    positionArray[i + 2] = z;
+                    positionArray[i + 1] = y + r - Math.cos(theta) * r;
+                } else if (u > 0) {
+                    const [x, z] = this.fromUV(angle, u, v);
+                    positionArray[i] = x;
+                    positionArray[i + 2] = z;
+                    positionArray[i + 1] = y;
+                } else {
+                    positionArray[i] = coordinateArray[i];
+                    positionArray[i + 2] = coordinateArray[i + 2];
                     positionArray[i + 1] = y;
                 }
             }
@@ -138,34 +162,62 @@ export class Paper extends GroupBase {
             const flatBottom = L - arcLength - foldLength;
 
             for (let i = 0; i < positionArray.length; i += 3) {
-                const x = coordinateArray[i];
+                const [u, v] = this.toUV(
+                    angle,
+                    coordinateArray[i],
+                    coordinateArray[i + 2]
+                );
                 const y = coordinateArray[i + 1];
 
-                if (x > L - foldLength) {
+                if (u > L - foldLength) {
                     const maxTheta = (1 - t) * Math.PI;
                     const foldT = Math.min(
-                        1 - (L - x) / (foldLength + 0.00001),
+                        1 - (L - u) / (foldLength + 0.00001),
                         1
                     );
                     const theta = foldT * maxTheta;
 
                     if (theta < Math.PI / 2) {
-                        positionArray[i] = flatBottom - Math.sin(theta) * r;
+                        const [x, z] = this.fromUV(
+                            angle,
+                            flatBottom - Math.sin(theta) * r,
+                            v
+                        );
+                        positionArray[i] = x;
+                        positionArray[i + 2] = z;
                         positionArray[i + 1] = y + r + Math.cos(theta) * r;
                     } else {
-                        positionArray[i] =
-                            flatBottom - 2 * r + Math.sin(theta) * r;
+                        const [x, z] = this.fromUV(
+                            angle,
+                            flatBottom - 2 * r + Math.sin(theta) * r,
+                            v
+                        );
+                        positionArray[i] = x;
+                        positionArray[i + 2] = z;
                         positionArray[i + 1] = Math.max(
                             y + r + Math.cos(theta) * r,
-                            minFoldedHeight
+                            minFoldedHeight + y
                         );
                     }
-                } else if (x > flatBottom) {
-                    const theta = (Math.PI * (x - flatBottom)) / arcLength;
-                    positionArray[i] = flatBottom + Math.sin(theta) * r;
-                    positionArray[i + 1] = y + r - Math.cos(theta) * r;
-                } else if (x > 0) {
+                } else if (u > flatBottom) {
+                    const theta = (Math.PI * (u - flatBottom)) / arcLength;
+
+                    const [x, z] = this.fromUV(
+                        angle,
+                        flatBottom + Math.sin(theta) * r,
+                        v
+                    );
                     positionArray[i] = x;
+                    positionArray[i + 2] = z;
+                    positionArray[i + 1] = y + r - Math.cos(theta) * r;
+                } else if (u > 0) {
+                    const [x, z] = this.fromUV(angle, u, v);
+                    positionArray[i] = x;
+                    positionArray[i + 2] = z;
+                    positionArray[i + 1] = y;
+                } else {
+                    positionArray[i] = coordinateArray[i];
+                    positionArray[i + 2] = coordinateArray[i + 2];
                     positionArray[i + 1] = y;
                 }
             }
@@ -185,33 +237,67 @@ export class Paper extends GroupBase {
             const flatTopStart = flatBottom + 2 * arcLength;
 
             for (let i = 0; i < positionArray.length; i += 3) {
-                const x = coordinateArray[i];
+                const [u, v] = this.toUV(
+                    angle,
+                    coordinateArray[i],
+                    coordinateArray[i + 2]
+                );
                 const y = coordinateArray[i + 1];
 
-                if (x > flatTopStart) {
-                    positionArray[i] = adjustedTarget + (L - x);
+                if (u > flatTopStart) {
+                    const [x, z] = this.fromUV(
+                        angle,
+                        adjustedTarget + (L - u),
+                        v
+                    );
+                    positionArray[i] = x;
+                    positionArray[i + 2] = z;
                     positionArray[i + 1] = y + minFoldedHeight;
-                } else if (x > flatBottom + arcLength) {
-                    const foldT = 1 - (flatTopStart - x) / arcLength;
+                } else if (u > flatBottom + arcLength) {
+                    const foldT = 1 - (flatTopStart - u) / arcLength;
                     const theta = foldT * Math.PI;
 
                     if (theta < Math.PI / 2) {
-                        positionArray[i] = flatBottom - Math.sin(theta) * r;
+                        const [x, z] = this.fromUV(
+                            angle,
+                            flatBottom - Math.sin(theta) * r,
+                            v
+                        );
+                        positionArray[i] = x;
+                        positionArray[i + 2] = z;
                         positionArray[i + 1] = y + r + Math.cos(theta) * r;
                     } else {
-                        positionArray[i] =
-                            flatBottom - 2 * r + Math.sin(theta) * r;
+                        const [x, z] = this.fromUV(
+                            angle,
+                            flatBottom - 2 * r + Math.sin(theta) * r,
+                            v
+                        );
+                        positionArray[i] = x;
+                        positionArray[i + 2] = z;
                         positionArray[i + 1] = Math.max(
                             y + r + Math.cos(theta) * r,
-                            minFoldedHeight
+                            minFoldedHeight + y
                         );
                     }
-                } else if (x > flatBottom) {
-                    const theta = (Math.PI * (x - flatBottom)) / arcLength;
-                    positionArray[i] = flatBottom + Math.sin(theta) * r;
-                    positionArray[i + 1] = y + r - Math.cos(theta) * r;
-                } else if (x > 0) {
+                } else if (u > flatBottom) {
+                    const theta = (Math.PI * (u - flatBottom)) / arcLength;
+
+                    const [x, z] = this.fromUV(
+                        angle,
+                        flatBottom + Math.sin(theta) * r,
+                        v
+                    );
                     positionArray[i] = x;
+                    positionArray[i + 2] = z;
+                    positionArray[i + 1] = y + r - Math.cos(theta) * r;
+                } else if (u > 0) {
+                    const [x, z] = this.fromUV(angle, u, v);
+                    positionArray[i] = x;
+                    positionArray[i + 2] = z;
+                    positionArray[i + 1] = y;
+                } else {
+                    positionArray[i] = coordinateArray[i];
+                    positionArray[i + 2] = coordinateArray[i + 2];
                     positionArray[i + 1] = y;
                 }
             }
@@ -221,5 +307,19 @@ export class Paper extends GroupBase {
         geometry.computeBoundingBox();
         geometry.computeVertexNormals();
         geometry.computeBoundingSphere();
+    }
+
+    private toUV(angle: number, x: number, z: number): [number, number] {
+        return [
+            x * Math.cos(angle) - z * Math.sin(angle),
+            x * Math.sin(angle) + z * Math.cos(angle),
+        ];
+    }
+
+    private fromUV(angle: number, u: number, v: number) {
+        return [
+            u * Math.cos(-angle) - v * Math.sin(-angle),
+            u * Math.sin(-angle) + v * Math.cos(-angle),
+        ];
     }
 }
