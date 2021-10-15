@@ -5,6 +5,7 @@ import { IBaseState } from './SceneBase';
 
 export class GroupBase extends THREE.Group {
     protected state: IBaseState;
+    private parentState: IBaseState;
 
     constructor(parentState: IBaseState) {
         super();
@@ -21,6 +22,7 @@ export class GroupBase extends THREE.Group {
 
     public dispose() {
         this.state?.disposalList?.forEach((item) => item?.dispose?.());
+        this.removeFromParent();
     }
 
     protected importModel(

@@ -40,6 +40,7 @@ export class SceneBase extends THREE.Scene {
 
     public dispose() {
         this.state?.disposalList?.forEach((item) => item?.dispose?.());
+        this.removeFromParent();
     }
 
     protected autoAddGroups(...args: typeof GroupBase[]) {
